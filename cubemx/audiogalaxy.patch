@@ -1,0 +1,149 @@
+# AudioGalaxy: STM32F407G-DISC1 board defaults (loadboard) + this patch.
+# The Discovery BSP (App/Bsp) owns the audio codec (I2C1, I2S3), the MEMS
+# microphone (I2S2) and the accelerometer (SPI1), as in ST's audio example,
+# so those peripherals are not configured here.
+-ip I2C1
+-ip I2S3
+-ip SPI1
+-I2C1.
+-I2S3.
+-SPI1.
+-PA4.
+-PA5.
+-PA6.
+-PA7.
+-PB6.
+-PB9.
+-PC7.
+-PC10.
+-PC12.
+-PB10.
+-PC3.
+-PE3.
+-PE1.
+-PD4.
+-PB2.
+-PC14-OSC32_IN.
+-PC15-OSC32_OUT.
+-VP_USB_HOST_VS_USB_HOST_CDC_FS.
+-VP_SYS_VS_Systick.
+-ProjectManager.functionlistsort
+-USB_HOST.
+
+# --- link to BeaconGalaxy: USART2 PA2/PA3 ---
+ip USART2
+PA2.GPIOParameters=GPIO_Label
+PA2.GPIO_Label=LINK_TX
+PA2.Mode=Asynchronous
+PA2.Signal=USART2_TX
+PA3.GPIOParameters=GPIO_Label
+PA3.GPIO_Label=LINK_RX
+PA3.Mode=Asynchronous
+PA3.Signal=USART2_RX
+USART2.BaudRate=115200
+USART2.IPParameters=VirtualMode,BaudRate
+USART2.VirtualMode=VM_ASYNC
+
+# --- console: USART3 PD8/PD9 (PB10 is the microphone clock) ---
+ip USART3
+PD8.GPIOParameters=GPIO_Label
+PD8.GPIO_Label=CONSOLE_TX
+PD8.Mode=Asynchronous
+PD8.Signal=USART3_TX
+PD9.GPIOParameters=GPIO_Label
+PD9.GPIO_Label=CONSOLE_RX
+PD9.Mode=Asynchronous
+PD9.Signal=USART3_RX
+USART3.BaudRate=115200
+USART3.IPParameters=VirtualMode,BaudRate
+USART3.VirtualMode=VM_ASYNC
+
+# --- user button: EXTI0 ---
+PA0-WKUP.GPIOParameters=GPIO_Label,GPIO_ModeDefaultEXTI
+PA0-WKUP.GPIO_ModeDefaultEXTI=GPIO_MODE_IT_RISING
+PA0-WKUP.GPIO_Label=USER_BUTTON
+PA0-WKUP.Signal=GPXTI0
+
+# --- LEDs ---
+PD12.GPIO_Label=LED_GREEN
+PD13.GPIO_Label=LED_ORANGE
+PD14.GPIO_Label=LED_RED
+PD15.GPIO_Label=LED_BLUE
+
+# --- HAL timebase TIM6 (SysTick belongs to FreeRTOS) ---
+VP_SYS_VS_tim6.Mode=TIM6
+VP_SYS_VS_tim6.Signal=SYS_VS_tim6
+
+# --- FreeRTOS (CMSIS-RTOS2) ---
+ip FREERTOS
+VP_FREERTOS_VS_CMSIS_V2.Mode=CMSIS_V2
+VP_FREERTOS_VS_CMSIS_V2.Signal=FREERTOS_VS_CMSIS_V2
+FREERTOS.IPParameters=Tasks01,configUSE_NEWLIB_REENTRANT,configTOTAL_HEAP_SIZE,configCHECK_FOR_STACK_OVERFLOW,configUSE_MALLOC_FAILED_HOOK,configRECORD_STACK_HIGH_ADDRESS
+FREERTOS.Tasks01=defaultTask,24,1024,StartDefaultTask,Default,NULL,Dynamic,NULL,NULL
+FREERTOS.configTOTAL_HEAP_SIZE=65536
+FREERTOS.configUSE_NEWLIB_REENTRANT=1
+FREERTOS.configCHECK_FOR_STACK_OVERFLOW=2
+FREERTOS.configUSE_MALLOC_FAILED_HOOK=1
+FREERTOS.configRECORD_STACK_HIGH_ADDRESS=1
+
+# --- USB host MSC on OTG FS ---
+VP_USB_HOST_VS_USB_HOST_MSC_FS.Mode=MSC_FS
+VP_USB_HOST_VS_USB_HOST_MSC_FS.Signal=USB_HOST_VS_USB_HOST_MSC_FS
+USB_HOST.BSP.number=1
+USB_HOST.IPParameters=VirtualModeFS,USBH_HandleTypeDef-MSC_FS,USBH_PROCESS_STACK_SIZE
+USB_HOST.USBH_HandleTypeDef-MSC_FS=hUsbHostFS
+USB_HOST.USBH_PROCESS_STACK_SIZE=1024
+USB_HOST.VirtualModeFS=Msc
+USB_HOST0.BSP.STBoard=false
+USB_HOST0.BSP.api=Unknown
+USB_HOST0.BSP.component=
+USB_HOST0.BSP.condition=
+USB_HOST0.BSP.instance=PC0
+USB_HOST0.BSP.ip=GPIO
+USB_HOST0.BSP.mode=Output
+USB_HOST0.BSP.name=Drive_VBUS_FS
+USB_HOST0.BSP.semaphore=
+USB_HOST0.BSP.solution=PC0
+
+# --- FatFs on the USB disk, long file names ---
+ip FATFS
+VP_FATFS_VS_USB.Mode=USB
+VP_FATFS_VS_USB.Signal=FATFS_VS_USB
+FATFS.IPParameters=_USE_LFN,_MAX_LFN,_USE_FIND,_CODE_PAGE,_FS_REENTRANT,_USE_STRFUNC
+FATFS._USE_LFN=2
+FATFS._MAX_LFN=255
+FATFS._USE_FIND=1
+FATFS._CODE_PAGE=437
+FATFS._FS_REENTRANT=1
+FATFS._USE_STRFUNC=2
+
+# --- NVIC: group 4; everything that calls the RTOS at >= 5 ---
+NVIC.PriorityGroup=NVIC_PRIORITYGROUP_4
+NVIC.SysTick_IRQn=true\:15\:0\:false\:false\:false\:true\:false\:true\:false
+NVIC.PendSV_IRQn=true\:15\:0\:false\:false\:false\:true\:false\:false\:false
+NVIC.SVCall_IRQn=true\:0\:0\:false\:false\:false\:false\:false\:false\:false
+NVIC.SavedPendsvIrqHandlerGenerated=true
+NVIC.SavedSvcallIrqHandlerGenerated=true
+NVIC.SavedSystickIrqHandlerGenerated=true
+NVIC.TIM6_DAC_IRQn=true\:15\:0\:false\:false\:true\:false\:false\:true\:true
+NVIC.TimeBase=TIM6_DAC_IRQn
+NVIC.TimeBaseIP=TIM6
+NVIC.OTG_FS_IRQn=true\:6\:0\:false\:false\:true\:true\:false\:true\:true
+NVIC.USART2_IRQn=true\:5\:0\:false\:false\:true\:true\:true\:true\:true
+NVIC.USART3_IRQn=true\:7\:0\:false\:false\:true\:true\:true\:true\:true
+NVIC.EXTI0_IRQn=true\:8\:0\:false\:false\:true\:true\:true\:true\:true
+
+# --- project ---
+ProjectManager.ProjectName=AudioGalaxy
+ProjectManager.ProjectFileName=AudioGalaxy.ioc
+ProjectManager.TargetToolchain=CMake
+ProjectManager.FirmwarePackage=STM32Cube FW_F4 V1.28.3
+ProjectManager.KeepUserCode=true
+ProjectManager.CoupleFile=true
+ProjectManager.LibraryCopy=0
+ProjectManager.MainLocation=Core/Src
+ProjectManager.StackSize=0x800
+ProjectManager.HeapSize=0x200
+ProjectManager.UnderRoot=false
+ProjectManager.BackupPrevious=false
+ProjectManager.DeletePrevious=true
