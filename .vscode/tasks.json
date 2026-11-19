@@ -1,0 +1,111 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "AudioGalaxy: build",
+            "type": "shell",
+            "command": "cmake --preset Debug; cmake --build --preset Debug",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": {
+                "base": "$gcc",
+                "fileLocation": "absolute"
+            }
+        },
+        {
+            "label": "AudioGalaxy: clean build",
+            "type": "shell",
+            "command": "cmake --preset Debug; cmake --build --preset Debug --clean-first",
+            "group": "build",
+            "problemMatcher": {
+                "base": "$gcc",
+                "fileLocation": "absolute"
+            }
+        },
+        {
+            "label": "AudioGalaxy: flash",
+            "detail": "STM32F407G-DISC1 over SWD, ST-LINK chosen by serial number; whole flash (no bootloader)",
+            "type": "shell",
+            "command": "C:/ST/STM32CubeCLT_1.16.0/STM32CubeProgrammer/bin/STM32_Programmer_CLI.exe",
+            "args": [
+                "-c",
+                "port=SWD",
+                "sn=${input:stlink}",
+                "mode=UR",
+                "-w",
+                "build/Debug/AudioGalaxy.elf",
+                "-v",
+                "-rst"
+            ],
+            "dependsOn": "AudioGalaxy: build",
+            "problemMatcher": []
+        },
+        {
+            "label": "AudioGalaxy: reset",
+            "type": "shell",
+            "command": "C:/ST/STM32CubeCLT_1.16.0/STM32CubeProgrammer/bin/STM32_Programmer_CLI.exe",
+            "args": [
+                "-c",
+                "port=SWD",
+                "sn=${input:stlink}",
+                "mode=HOTPLUG",
+                "-rst"
+            ],
+            "problemMatcher": []
+        },
+        {
+            "label": "AudioGalaxy: console over SWD",
+            "detail": "python tools/swd_console.py <elf> <serial> \"<command>\" (no wiring needed)",
+            "type": "shell",
+            "command": "python tools/swd_console.py build/Debug/AudioGalaxy.elf ${input:stlink} \"${input:command}\"",
+            "problemMatcher": []
+        },
+        {
+            "label": "host tests",
+            "detail": "PC unit tests (sh tests/host/run_tests.sh) with Cygwin gcc",
+            "type": "shell",
+            "command": "C:/cygwin64/bin/bash.exe",
+            "args": [
+                "-lc",
+                "cd \"$(cygpath '${workspaceFolder}')\" && sh tests/host/run_tests.sh"
+            ],
+            "group": "test",
+            "problemMatcher": "$gcc"
+        },
+        {
+            "label": "CI checks",
+            "detail": "sh tools/ci_build.sh: clean build (no warnings in own code) + host tests",
+            "type": "shell",
+            "command": "C:/cygwin64/bin/bash.exe",
+            "args": [
+                "-lc",
+                "cd \"$(cygpath '${workspaceFolder}')\" && PATH=\"$PATH:$(cygpath 'C:/ST/STM32CubeCLT_1.16.0/GNU-tools-for-STM32/bin'):$(cygpath 'C:/ST/STM32CubeCLT_1.16.0/CMake/bin'):$(cygpath 'C:/ST/STM32CubeCLT_1.16.0/Ninja/bin')\" sh tools/ci_build.sh"
+            ],
+            "group": "test",
+            "problemMatcher": []
+        },
+        {
+            "label": "regenerate CubeMX code",
+            "detail": "sh tools/cubemx_generate.sh . (USER CODE blocks, App/ and common/ are kept)",
+            "type": "shell",
+            "command": "sh tools/cubemx_generate.sh .",
+            "problemMatcher": []
+        }
+    ],
+    "inputs": [
+        {
+            "id": "stlink",
+            "type": "promptString",
+            "description": "ST-LINK serial number",
+            "default": "066DFF383032534E43133160"
+        },
+        {
+            "id": "command",
+            "type": "promptString",
+            "description": "console command",
+            "default": "help"
+        }
+    ]
+}

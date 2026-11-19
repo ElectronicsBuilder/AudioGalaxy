@@ -39,9 +39,17 @@ add_subdirectory(cmake/stm32cubemx)
 
 # ---------------------------------------------------------------------------
 # AudioGalaxy application code (App/) and code shared with BeaconGalaxy
-# (../common). CubeMX owns Core/, Drivers/, Middlewares/, USB_HOST/, FATFS/.
+# (common/). CubeMX owns Core/, Drivers/, Middlewares/, USB_HOST/, FATFS/.
 # ---------------------------------------------------------------------------
-set(COMMON_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../common)
+# Shared code and tools: inside this project (stand-alone repository) or next
+# to it (the combined Galaxy workspace).
+if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/common)
+    set(COMMON_DIR ${CMAKE_CURRENT_SOURCE_DIR}/common)
+    set(TOOLS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/tools)
+else()
+    set(COMMON_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../common)
+    set(TOOLS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../tools)
+endif()
 
 # The Discovery BSP (App/Bsp) drives the codec (I2C1 + I2S3), the microphone
 # (I2S2) and the accelerometer bus (SPI1); CubeMX does not configure them, so
