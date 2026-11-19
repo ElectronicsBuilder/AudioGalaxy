@@ -210,9 +210,28 @@ static int P_PlayTrack(int index)
   return 0;
 }
 
+/* Pause keeps the codec powered and clocked and plays silence. Powering it
+ * down (what the ST driver's pause does) leaves the headphone output undriven,
+ * and an amplified speaker on it hisses until playback resumes. */
+static void P_Pause(void)
+{
+  memset(out_buf, 0, sizeof out_buf);       /* silence right away, both halves */
+  P_SetState(PLAYER_PAUSED);
+}
+
+static void P_Resume(void)
+{
+  P_SetState(PLAYER_PLAYING);               /* the next free half is read from the file again */
+}
+
 /* a half of the buffer was played: refill it, or finish the track */
 static void P_OnHalfDone(uint8_t *half)
 {
+  if (st.state == PLAYER_PAUSED)
+  {
+    memset(half, 0, OUT_HALF_BYTES);
+    return;
+  }
   if (st.state != PLAYER_PLAYING) return;
   if (data_left == 0 && end_halves >= 2)    /* both halves silent: the track is over */
   {
@@ -385,7 +404,7 @@ static void P_Command(const PlayerCmd *c)
       else P_PlayTrack((int)c->arg);
       break;
     case GX_START:
-      if (st.state == PLAYER_PAUSED) { BSP_AUDIO_OUT_Resume(); P_SetState(PLAYER_PLAYING); }
+      if (st.state == PLAYER_PAUSED) P_Resume();
       else if (st.state == PLAYER_IDLE) P_PlayTrack(st.track >= 0 ? st.track : 0);
       break;
     case GX_STOP:
@@ -398,10 +417,10 @@ static void P_Command(const PlayerCmd *c)
       }
       break;
     case GX_PAUSE:
-      if (st.state == PLAYER_PLAYING) { BSP_AUDIO_OUT_Pause(); P_SetState(PLAYER_PAUSED); }
+      if (st.state == PLAYER_PLAYING) P_Pause();
       break;
     case GX_RESUME:
-      if (st.state == PLAYER_PAUSED) { BSP_AUDIO_OUT_Resume(); P_SetState(PLAYER_PLAYING); }
+      if (st.state == PLAYER_PAUSED) P_Resume();
       break;
     case GX_VOL:
       P_SetVolume(c->arg);

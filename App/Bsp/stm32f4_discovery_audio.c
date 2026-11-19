@@ -329,13 +329,19 @@ uint8_t BSP_AUDIO_OUT_Resume(void)
   *                            Then need to reconfigure the Codec after power on.  
   * @retval AUDIO_OK if correct communication, else wrong communication
   */
+#define AUDIO_POWER_DOWN_MS 50u   /* MCLK kept running while the codec powers down */
+
 uint8_t BSP_AUDIO_OUT_Stop(uint32_t Option)
 {
-  /* Call DMA Stop to disable DMA stream before stopping codec */
+  /* AudioGalaxy change: the codec is muted and powered down FIRST, while the
+   * I2S still supplies MCLK; the CS43L22 needs the clock to complete its power
+   * down sequence. Stopping the I2S first (the original order) left the
+   * headphone amplifier half on, heard as static fading over a few seconds. */
+  uint32_t err = pAudioDrv->Stop(AUDIO_I2C_ADDRESS, Option);
+  HAL_Delay(AUDIO_POWER_DOWN_MS);
   HAL_I2S_DMAStop(&hAudioOutI2s);
-  
-  /* Call Audio Codec Stop function */
-  if(pAudioDrv->Stop(AUDIO_I2C_ADDRESS, Option) != 0)
+
+  if(err != 0)
   {
     return AUDIO_ERROR;
   }
