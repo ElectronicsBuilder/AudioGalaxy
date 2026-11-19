@@ -73,7 +73,8 @@ set(COMMON_SOURCES
     ${COMMON_DIR}/util/crc32.c
     ${COMMON_DIR}/util/swd_console.c
     ${COMMON_DIR}/link/galaxy_link.c
-    ${COMMON_DIR}/stm32f4/uart_io.c)
+    ${COMMON_DIR}/stm32f4/uart_io.c
+    ${COMMON_DIR}/stm32f4/watchdog.c)
 
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE ${APP_SOURCES} ${COMMON_SOURCES})
 

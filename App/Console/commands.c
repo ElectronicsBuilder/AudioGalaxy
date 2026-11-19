@@ -8,6 +8,7 @@
 #include "player.h"
 #include "playlist.h"
 #include "link.h"
+#include "watchdog.h"
 #include "app_hal.h"
 #include "cmsis_os2.h"
 #include "FreeRTOS.h"
@@ -28,6 +29,7 @@ static int C_Ver(int argc, char **argv)
   Cli_Printf("version=%s", APP_VERSION);
   Cli_Printf("board=%s", APP_BOARD);
   Cli_Printf("built=%s %s", __DATE__, __TIME__);
+  Cli_Printf("last_reset=%s", Wdg_ResetCause());
   return 0;
 }
 
@@ -193,6 +195,29 @@ static int C_Reset(int argc, char **argv)
   return 0;
 }
 
+/* wdg | wdg stall <task> | wdg hang: watchdog status and tests */
+static int C_Wdg(int argc, char **argv)
+{
+  if (argc < 2)
+  {
+    Cli_Printf("last_reset=%s", Wdg_ResetCause());
+    for (int i = 0; i < Wdg_Count(); i++) Cli_Printf("task=%s age_ms=%lu", Wdg_Name(i), (unsigned long)Wdg_Age(i));
+    return 0;
+  }
+  if (strcmp(argv[1], "stall") == 0 && argc > 2)
+  {
+    if (Wdg_Stall(argv[2]) != 0) return Cli_Error("no such task");
+    Cli_Printf("%s no longer reports: reset in about %u s", argv[2], (WDG_WINDOW_MS + 4000u) / 1000u);
+    return 0;
+  }
+  if (strcmp(argv[1], "hang") == 0)
+  {
+    Cli_Printf("the App task stops here: reset in about 4 s");
+    for (;;) { }
+  }
+  return Cli_Error("usage: wdg [stall <task> | hang]");
+}
+
 static const CliCommand commands[] = {
   { "ver",    "",                "firmware version", C_Ver, NULL },
   { "status", "",                "player state, track, volume, position", C_Status, NULL },
@@ -218,6 +243,7 @@ static const CliCommand commands[] = {
   { "tasks",  "",                "heap and task stacks", C_Tasks, NULL },
   { "log",    "[level]",         "show / set the log level", C_Log, NULL },
   { "reset",  "",                "restart the board", C_Reset, NULL },
+  { "wdg",      "[stall <task> | hang]", "watchdog: tasks, reset cause, tests", C_Wdg, NULL },
 };
 
 void Commands_Register(void)

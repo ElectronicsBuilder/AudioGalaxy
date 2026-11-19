@@ -14,6 +14,7 @@
 #include "playlist.h"
 #include "wav.h"
 #include "log.h"
+#include "watchdog.h"
 #include "app_hal.h"
 #include "cmsis_os2.h"
 #include "ff.h"
@@ -447,12 +448,15 @@ static void P_Command(const PlayerCmd *c)
 
 /* ---------- task ---------- */
 
+static int wdg_id = -1;
+
 static void P_Task(void *arg)
 {
   (void)arg;
   P_SetState(PLAYER_NO_DISK);
   for (;;)
   {
+    Wdg_Alive(wdg_id);
     uint32_t flags = osThreadFlagsWait(FLAG_ALL, osFlagsWaitAny, 20);
     if (flags & osFlagsError) flags = 0;      /* timeout */
 
@@ -479,6 +483,7 @@ void Player_Start(PlayerEventFn on_event)
   st.track = -1;
   st.volume = 70;
   queue = osMessageQueueNew(16, sizeof(PlayerCmd), NULL);
+  wdg_id = Wdg_Register("player");
   static const osThreadAttr_t attr = {
     .name = "player",
     .stack_size = 4096,

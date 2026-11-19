@@ -15,6 +15,7 @@
 #include "link.h"
 #include "player.h"
 #include "commands.h"
+#include "watchdog.h"
 #include "cmsis_os2.h"
 
 #define CONSOLE_PORT 0     /* USART3 PD8/PD9 */
@@ -74,8 +75,17 @@ static void P_Button(void)
   was_down = down;
 }
 
+/* Watchdog: the App and player tasks must each report within WDG_WINDOW_MS,
+ * or the IWDG resets the board (see watchdog.h). */
+#define WDG_START_MS  8000u
+#define WDG_RUN_MS    4000u
+
+static int wdg_app = -1;
+
 void App_Init(void)
 {
+  Wdg_Start(WDG_START_MS);
+  wdg_app = Wdg_Register("app");
   console_lock = osMutexNew(NULL);
   console = UartIo_Start(USART3);
   Cli_SetWriter(CONSOLE_PORT, P_ConsoleWrite);
@@ -85,6 +95,8 @@ void App_Init(void)
   Cli_Init(APP_NAME " " APP_VERSION);
   LOG_I("%s %s on %s, %lu MHz", APP_NAME, APP_VERSION, APP_BOARD,
         (unsigned long)(HAL_RCC_GetSysClockFreq() / 1000000u));
+  if (Wdg_LastResetWasWatchdog()) LOG_W("last reset: %s", Wdg_ResetCause());
+  else LOG_I("last reset: %s", Wdg_ResetCause());
 
   Link_Init();
   Player_Start(Link_Event);
@@ -96,8 +108,11 @@ void App_Run(void)
 {
   uint32_t next = osKernelGetTickCount();
   uint32_t beat = 0;
+  Wdg_Start(WDG_RUN_MS);
   for (;;)
   {
+    Wdg_Alive(wdg_app);
+    Wdg_Poll();
     next += 5u;
     uint32_t now = osKernelGetTickCount();
     if ((int32_t)(next - now) > 0) osDelayUntil(next);

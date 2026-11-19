@@ -22,20 +22,22 @@ Part of a three-repository system: [BeaconGalaxy](https://github.com/Electronics
   `GALAXY...` commands and events. See [docs/protocol.md](docs/protocol.md).
 - **Board controls:** the blue LED is lit while playing and the red LED while
   recording. The user button starts, pauses and resumes playback.
+- **Watchdog:** the App and player tasks are supervised; a stuck task resets
+  the board, and the next boot reports which task it was.
 
 ## Build
 
 You need STM32CubeCLT 1.16 (arm-none-eabi-gcc, CMake, Ninja) on the PATH.
 
 ```
-cmake --preset Debug
-cmake --build --preset Debug
+cmake --preset Release        # Debug for the debugger
+cmake --build --preset Release
 ```
 
 ## Flash
 
 ```
-STM32_Programmer_CLI -c port=SWD sn=<st-link serial> mode=UR -w build/Debug/AudioGalaxy.elf -v -rst
+STM32_Programmer_CLI -c port=SWD sn=<st-link serial> mode=UR -w build/Release/AudioGalaxy.elf -v -rst
 ```
 
 VS Code tasks (`.vscode/tasks.json`) cover building, flashing, the console
@@ -45,10 +47,10 @@ over SWD, the host tests and the CI checks.
 
 - **Serial:** USART3, PD8 (TX) / PD9 (RX), 115200 baud.
 - **Over SWD, no wiring:**
-  `python tools/swd_console.py build/Debug/AudioGalaxy.elf <st-link serial> "help"`
+  `python tools/swd_console.py build/Release/AudioGalaxy.elf <st-link serial> "help"`
 
 Commands include `status`, `ls`, `play`, `pause`, `resume`, `stop`, `vol`,
-`repeat`, `rec start|stop` and `link`. `gx <GALAXY...>` handles a link
+`repeat`, `rec start|stop`, `link` and `wdg` (watchdog status and tests). `gx <GALAXY...>` handles a link
 command as if BeaconGalaxy had sent it.
 
 ## Layout
